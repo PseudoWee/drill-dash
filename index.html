@@ -931,6 +931,7 @@ async function raceFinish(best){
     const where=idx>-1?'You are #'+(idx+1)+' of '+q.size+(q.size>=100?'+':'')+'.':'Your time is outside the top 100.';
     rk.textContent=(posted?'Time posted to the leaderboard. ':'Your faster time of '+fmt(old)+' stays on the board. ')+where;
   }catch(e){
+    console.error('Leaderboard error:',e&&e.code,e&&e.message);
     rk.textContent=(e&&e.code==='invalid_argument')?'Could not post your time. Please try again in a moment.':'Could not reach the leaderboard. Your time was not posted.';
   }
 }
