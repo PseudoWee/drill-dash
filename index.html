@@ -368,6 +368,8 @@ h1,h2,h3{text-wrap:balance}
 </main>
 <canvas id="confetti" aria-hidden="true"></canvas>
 
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script>
 (function(){
 'use strict';
@@ -895,7 +897,7 @@ function renderLb(){
   });
   sel.value=LB.sel;
   fillList($('#lbList'),LB.sel,'');
-  $('#lbNote').textContent=LB.state==='none'?'The leaderboard works when this page is opened from its share link while signed in. You can still race the clock.':LB.status;
+  $('#lbNote').textContent=LB.state==='none'?'The leaderboard could not connect. You can still race the clock.':LB.status;
   $('#lbBlock').hidden=LB.state==='none'&&S.mode!=='race';
   $('#nameRow').hidden=S.mode!=='race'||LB.state==='none';
 }
@@ -929,7 +931,7 @@ async function raceFinish(best){
     const where=idx>-1?'You are #'+(idx+1)+' of '+q.size+(q.size>=100?'+':'')+'.':'Your time is outside the top 100.';
     rk.textContent=(posted?'Time posted to the leaderboard. ':'Your faster time of '+fmt(old)+' stays on the board. ')+where;
   }catch(e){
-    rk.textContent=(e&&e.code==='invalid_argument')?'Could not post your time. Ask your teacher to give you Contributor access.':'Could not reach the leaderboard. Your time was not posted.';
+    rk.textContent=(e&&e.code==='invalid_argument')?'Could not post your time. Please try again in a moment.':'Could not reach the leaderboard. Your time was not posted.';
   }
 }
 $('#pname').value=NAME;
@@ -939,12 +941,17 @@ $('#pname').addEventListener('input',e=>{
 });
 $('#lbSelect').addEventListener('change',e=>{LB.sel=e.target.value;renderLb();});
 (async function initLb(){
-  let db=null,user=null;
-  try{if(window.claude&&claude.use){db=await claude.use('db');user=await claude.use('user');}}catch(e){}
+  let db=null;
+  try{
+    if(window.firebase){
+      firebase.initializeApp({apiKey:"AIzaSyDyGeuZmkleKTSCIuHHwk8QK_AwUazKPEc",authDomain:"drill-dash-1ca5c.firebaseapp.com",projectId:"drill-dash-1ca5c",storageBucket:"drill-dash-1ca5c.firebasestorage.app",messagingSenderId:"569297488053",appId:"1:569297488053:web:f5ad4a1a8e291c018716fc"});
+      db=firebase.firestore();
+    }
+  }catch(e){}
   LB.db=db;
   if(!db){LB.state='none';renderLb();return;}
   LB.state='ok';
-  try{LB.canEdit=user?!!(await user.canEdit()):false;}catch(e){}
+  LB.canEdit=false;
   const to=setTimeout(()=>{if(!LB.ready){LB.status='Cannot reach the leaderboard yet. It will fill in once the connection works.';renderLb();}},10000);
   db.collection('scores').limit(1000).onSnapshot(snap=>{
     clearTimeout(to);LB.ready=true;LB.status='';
